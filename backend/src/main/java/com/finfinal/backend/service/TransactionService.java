@@ -1,6 +1,7 @@
 package com.finfinal.backend.service;
 
 import com.finfinal.backend.DTO.TransactionDto;
+import com.finfinal.backend.DTO.TransactionResponseDto; // Ensure this is imported
 import com.finfinal.backend.enums.TransactionType;
 import com.finfinal.backend.model.Asset;
 import com.finfinal.backend.model.Holding;
@@ -12,6 +13,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -26,6 +29,30 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
         this.assetRepository = assetRepository;
         this.holdingRepository = holdingRepository;
+    }
+
+    // ✅ NEW: Fetch all transactions for the History Page
+    public List<TransactionResponseDto> getAllTransactions() {
+        // Ensure your TransactionRepository has "findAllByOrderByTimestampDesc()"
+        // If not, use transactionRepository.findAll() for now.
+        List<Transaction> transactions = transactionRepository.findAllByOrderByTimestampDesc();
+
+        return transactions.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ NEW: Helper to convert Entity -> Response DTO
+    private TransactionResponseDto convertToResponseDto(Transaction tx) {
+        return new TransactionResponseDto(
+                tx.getId(),
+                tx.getType(),
+                tx.getPrice(),
+                tx.getQuantity(),
+                tx.getTimestamp(),
+                tx.getAsset().getId(),
+                tx.getAsset().getName() // This connects the Asset Name to the frontend
+        );
     }
 
     @Transactional
@@ -73,6 +100,7 @@ public class TransactionService {
         holding.setQuantity(newQuantity);
         holding.setAvgBuyPrice(round(newAvgPrice));
 
+        // NOTE: We update asset quantity here, but frontend dashboard should rely on Holdings!
         asset.setQuantity(asset.getQuantity() + dto.getQuantity());
 
         holdingRepository.save(holding);
