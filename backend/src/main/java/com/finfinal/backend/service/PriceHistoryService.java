@@ -1,6 +1,7 @@
 package com.finfinal.backend.service;
 
 import com.finfinal.backend.config.SchedulerConfig;
+import com.finfinal.backend.enums.AssetCategory;
 import com.finfinal.backend.model.PriceHistory;
 import com.finfinal.backend.model.Asset;
 import com.finfinal.backend.repository.PriceHistoryRepository;
@@ -14,42 +15,56 @@ import java.util.Random;
 @Service
 public class PriceHistoryService {
 
-    private final PriceHistoryRepository priceHistoryRepository;
     private final AssetRepository assetRepository;
-
-    public PriceHistoryService(PriceHistoryRepository priceHistoryRepository, AssetRepository assetRepository) {
-        this.priceHistoryRepository = priceHistoryRepository;
-        this.assetRepository = assetRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
+    private double getAnnualReturn(AssetCategory category) {
+        return switch (category) {
+            case STOCK -> 0.12;
+            case MF_LARGE -> 0.11;
+            case MF_MID -> 0.14;
+            case MF_SMALL -> 0.18;
+            case GOLD_ETF -> 0.08;
+            case SILVER_ETF -> 0.10;
+        };
     }
 
-    // This is the method you're trying to call
-    public void generatePriceHistory() {
-        // Get all assets in the database
+    public PriceHistoryService(AssetRepository assetRepository,
+                               PriceHistoryRepository priceHistoryRepository) {
+        this.assetRepository = assetRepository;
+        this.priceHistoryRepository = priceHistoryRepository;
+    }
+
+    public void generate365DaysHistory() {
+
         List<Asset> assets = assetRepository.findAll();
+        LocalDate today = LocalDate.now();
 
-        // Loop through each asset and save 365 price history entries
         for (Asset asset : assets) {
-            List<LocalDate> last365Days = SchedulerConfig.getLast365Days(); // Getting last 365 days
 
-            for (LocalDate date : last365Days) {
-                // Here we use a random price for simplicity, you can replace this with real data
-                double randomPrice = generateRandomPrice(asset);
+            double price = asset.getLastDayPrice();
+            double annualReturn = getAnnualReturn(asset.getCategory());
+            double dailyDrift = annualReturn / 252;
 
-                // Creating a new PriceHistory entry for each asset and date
-                PriceHistory priceHistory = new PriceHistory();
-                priceHistory.setAsset(asset);
-                priceHistory.setPrice(randomPrice);
-                priceHistory.setDate(date);
+            for (int i = 365; i >= 1; i--) {
 
-                // Saving the PriceHistory entry to the database
-                priceHistoryRepository.save(priceHistory);
+                // volatility: ±1.2%
+                double noise = (Math.random() * 2 - 1) * 0.012;
+
+                double dailyReturn = dailyDrift + noise;
+                price = price * (1 + dailyReturn);
+
+                PriceHistory history = new PriceHistory();
+                history.setAsset(asset);
+                history.setDate(today.minusDays(i));
+                history.setPrice(round(price));
+
+                priceHistoryRepository.save(history);
             }
         }
     }
 
-    private double generateRandomPrice(Asset asset) {
-        // Example: create random price (you could implement real pricing logic here)
-        Random random = new Random();
-        return asset.getCurrentPrice() + (random.nextDouble() * 10); // Adding up to 10 for randomness
+
+    private double round(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 }

@@ -22,6 +22,15 @@ public class Asset {
 
     public Asset() {}
 
+    public Asset(Long id, String name, AssetCategory category, double currentPrice, double lastDayPrice, int quantity) {
+        this.id = id;
+        this.name = name;
+        this.category = category;
+        this.currentPrice = currentPrice;
+        this.lastDayPrice = lastDayPrice;
+        this.quantity = quantity;
+    }
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

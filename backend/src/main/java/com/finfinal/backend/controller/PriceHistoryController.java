@@ -6,18 +6,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/price-history")
+@RequestMapping("/api/prices")
 public class PriceHistoryController {
 
-    private final PriceHistoryService priceHistoryService;
+    private final PriceHistoryService service;
 
-    public PriceHistoryController(PriceHistoryService priceHistoryService) {
-        this.priceHistoryService = priceHistoryService;
+    public PriceHistoryController(PriceHistoryService service) {
+        this.service = service;
     }
 
     @PostMapping("/generate")
-    public String generatePriceHistory() {
-        priceHistoryService.generatePriceHistory();
-        return "Price history generation started.";
+    public String generateHistory() {
+        service.generate365DaysHistory();
+        return "Price history generated";
     }
 }
+
