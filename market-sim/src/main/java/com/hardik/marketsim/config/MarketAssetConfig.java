@@ -49,5 +49,9 @@ public class MarketAssetConfig {
         public void setBasePrice(double basePrice) {
             this.basePrice = basePrice;
         }
+
+
+
+
     }
 }

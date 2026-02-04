@@ -2,18 +2,26 @@ package com.hardik.marketsim.model;
 
 public class SimulatedAsset {
 
-    private Long assetId;              // must match backend asset ID
+    private Long id;              // must match backend asset ID
     private AssetCategory category;
     private double price;
 
     public SimulatedAsset(Long assetId, AssetCategory category, double price) {
-        this.assetId = assetId;
+        this.id = assetId;
         this.category = category;
         this.price = price;
     }
 
-    public Long getAssetId() {
-        return assetId;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setCategory(AssetCategory category) {
+        this.category = category;
     }
 
     public AssetCategory getCategory() {
