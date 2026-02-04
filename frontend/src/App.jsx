@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Stocks from './pages/Stocks'; // <--- 1. Import this
+import Holdings from './pages/Holdings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -15,6 +16,8 @@ function App() {
         return <Transactions />;
       case 'stocks':           // <--- 2. Add this case
         return <Stocks />;
+        case 'holdings':
+            return <Holdings />; // <--- 2. Add Case
       default:
         return <Dashboard />;
     }

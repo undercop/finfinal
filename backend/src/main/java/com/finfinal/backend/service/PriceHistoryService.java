@@ -1,4 +1,6 @@
 package com.finfinal.backend.service;
+import com.finfinal.backend.DTO.PriceHistoryDto;
+import java.util.stream.Collectors;
 
 import com.finfinal.backend.config.SchedulerConfig;
 import com.finfinal.backend.enums.AssetCategory;
@@ -32,6 +34,13 @@ public class PriceHistoryService {
                                PriceHistoryRepository priceHistoryRepository) {
         this.assetRepository = assetRepository;
         this.priceHistoryRepository = priceHistoryRepository;
+    }
+    public List<PriceHistoryDto> getHistoryForAsset(Long assetId) {
+        List<PriceHistory> historyList = priceHistoryRepository.findByAssetIdOrderByDateAsc(assetId);
+
+        return historyList.stream()
+                .map(h -> new PriceHistoryDto(h.getDate(), h.getPrice()))
+                .collect(Collectors.toList());
     }
 
     public void generate365DaysHistory() {
