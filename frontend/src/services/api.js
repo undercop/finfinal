@@ -15,20 +15,35 @@ export const getDashboardData = async () => {
   if (!USE_REAL_API) return mockDashboardData;
 
   try {
-    // We fetch Summary and Assets (for the pie chart calculation)
-    const [summaryRes, assetsRes] = await Promise.all([
+    // 1. Fetch Summary, Assets (for Category), AND Holdings (for Real Quantity)
+    const [summaryRes, assetsRes, holdingsRes] = await Promise.all([
       api.get('/portfolio/summary'),
-      api.get('/assets')
+      api.get('/assets'),
+      api.get('/holdings')
     ]);
 
-    // Calculate Diversification manually (Frontend Math)
     const assets = assetsRes.data || [];
+    const holdings = holdingsRes.data || [];
+
+    // 2. Create a Map of Assets to easily find the Category
+    // Format: { 1: "STOCK", 2: "GOLD_ETF" }
+    const assetCategoryMap = {};
+    assets.forEach(asset => {
+      assetCategoryMap[asset.id] = asset.category || "Other";
+    });
+
+    // 3. Calculate Diversification using HOLDINGS (The source of truth)
     const categoryMap = {};
 
-    assets.forEach(asset => {
-      // Use currentPrice * quantity from the Asset endpoint
-      const value = asset.currentPrice * asset.quantity;
-      const cat = asset.category || "Other";
+    holdings.forEach(holding => {
+      // Use the Quantity from the HOLDING table (Correct)
+      // Use the Price from the HOLDING response (Correct)
+      const value = holding.currentPrice * holding.quantity;
+
+      // Look up the category using the Asset ID
+      const assetId = holding.assetId;
+      const cat = assetCategoryMap[assetId] || "Other";
+
       if (!categoryMap[cat]) categoryMap[cat] = 0;
       categoryMap[cat] += value;
     });
@@ -48,7 +63,6 @@ export const getDashboardData = async () => {
         totalPortfolioValue: summaryRes.data.totalPortfolioValue,
         oneDayReturn: summaryRes.data.oneDayReturn,
         oneDayReturnValue: summaryRes.data.oneDayReturnValue,
-        // Backend includes projectedValue in summary now
         projectedValue: summaryRes.data.projectedValue || 0,
       },
       diversification: diversificationData,
