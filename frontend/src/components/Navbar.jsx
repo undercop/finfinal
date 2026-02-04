@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
   import { Bell, User, Menu } from 'lucide-react';
 
+
   // 1. We accept 'onNavigate' as a prop here
   const Navbar = ({ onNavigate }) => {
     const [showAlerts, setShowAlerts] = useState(false);
@@ -38,6 +39,12 @@ import React, { useState } from 'react';
               className="hover:text-blue-400 transition"
             >
               Stocks
+            </button>
+            <button
+              onClick={() => onNavigate('holdings')}
+              className="hover:text-blue-400 transition"
+            >
+              Holdings
             </button>
           </div>
 

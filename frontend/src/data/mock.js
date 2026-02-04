@@ -30,6 +30,15 @@ export const mockTransactions = [
   { id: 4, type: 'BUY', asset: 'BTC', amount: '0.05 BTC', price: '$34,000', total: '$1,700.00', date: '2023-10-18', status: 'Pending' },
   { id: 5, type: 'DIVIDEND', asset: 'MSFT', amount: '-', price: '-', total: '$45.20', date: '2023-10-15', status: 'Completed' },
 ];
+// Add this to your existing exports
+export const mockHoldings = [
+  { symbol: 'AAPL', name: 'Apple Inc.', quantity: 15, avgPrice: 178.86, currentPrice: 54.74 },
+  { symbol: 'NVDA', name: 'NVIDIA Corp', quantity: 5, avgPrice: 825.39, currentPrice: 567.23 },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', quantity: 10, avgPrice: 143.43, currentPrice: 245.75 },
+  { symbol: 'TSLA', name: 'Tesla Inc.', quantity: 8, avgPrice: 165.71, currentPrice: 285.31 },
+  { symbol: 'MSFT', name: 'Microsoft Corp', quantity: 12, avgPrice: 395.71, currentPrice: 509.81 },
+  { symbol: 'GOLD', name: 'Gold Trust', quantity: 25, avgPrice: 2092.19, currentPrice: 5191.55 },
+];
 // Export 3: Stocks & Chart Data
 export const mockStockData = [
   {

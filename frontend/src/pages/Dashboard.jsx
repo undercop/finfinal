@@ -1,5 +1,5 @@
-import React from 'react';
-import { mockDashboardData } from '../data/mock';
+import React, { useEffect, useState } from 'react';
+import { getDashboardData } from '../services/api'; // Import the service
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
 
@@ -26,7 +26,27 @@ const StatCard = ({ title, value, subValue, isPositive, icon: Icon }) => (
 );
 
 const Dashboard = () => {
-  const { summary, diversification } = mockDashboardData;
+  // 1. State to hold the data
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // 2. Fetch data on load
+  useEffect(() => {
+    const loadData = async () => {
+      const result = await getDashboardData();
+      setData(result);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  // 3. Show loading state
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-blue-500">Loading Dashboard...</div>;
+  }
+
+  // 4. Use the data (Now it works for both Mock AND Real!)
+  const { summary, diversification, user } = data;
 
   return (
     <div className="min-h-screen bg-slate-950 p-6">
@@ -35,14 +55,14 @@ const Dashboard = () => {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400 mt-1">Welcome back, Raj. Here is your portfolio overview.</p>
+          <p className="text-slate-400 mt-1">Welcome back, {user.name}. Here is your portfolio overview.</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Balance"
-            value={`$${mockDashboardData.user.balance.toLocaleString()}`}
+            value={`$${user.balance.toLocaleString()}`}
             icon={Wallet}
             isPositive={true}
           />

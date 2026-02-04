@@ -1,11 +1,49 @@
-import React, { useState } from 'react';
-import { mockStockData } from '../data/mock';
+import React, { useState, useEffect } from 'react';
+import { getStocks } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { TrendingUp, TrendingDown, Layers } from 'lucide-react';
 
 const Stocks = () => {
-  // State to track which stock is currently selected for the chart
-  const [selectedStock, setSelectedStock] = useState(mockStockData[0]);
+  const [stocks, setStocks] = useState([]);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load data when the page opens
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await getStocks();
+        setStocks(data);
+        // Default to selecting the first stock in the list
+        if (data.length > 0) {
+          setSelectedStock(data[0]);
+        }
+      } catch (error) {
+        console.error("Failed to load stocks:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Handle Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-blue-500 animate-pulse font-medium">Loading Market Data...</div>
+      </div>
+    );
+  }
+
+  // Handle Empty State (if no assets found)
+  if (!selectedStock) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+        No stocks found in portfolio.
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 p-6">
@@ -18,7 +56,7 @@ const Stocks = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* LEFT COLUMN: Main Chart Section (Takes up 2 columns space) */}
+          {/* LEFT COLUMN: Main Chart Section */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-xl">
 
@@ -31,7 +69,9 @@ const Stocks = () => {
                       {selectedStock.symbol}
                     </span>
                   </h2>
-                  <p className="text-slate-400 text-sm">Weekly Performance</p>
+                  <p className="text-slate-400 text-sm">
+                    Performance ({selectedStock.history?.length || 0} Days)
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-white">${selectedStock.price}</p>
@@ -45,7 +85,7 @@ const Stocks = () => {
               {/* The Line Chart */}
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={selectedStock.history}>
+                  <LineChart data={selectedStock.history || []}>
                     <defs>
                       <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
@@ -58,6 +98,13 @@ const Stocks = () => {
                       stroke="#64748b"
                       tick={{fill: '#64748b'}}
                       axisLine={false}
+                      minTickGap={30}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        // Check if valid date before formatting
+                        if (isNaN(date.getTime())) return value;
+                        return date.toLocaleString('default', { month: 'short' });
+                      }}
                     />
                     <YAxis
                       stroke="#64748b"
@@ -69,14 +116,15 @@ const Stocks = () => {
                     <Tooltip
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff' }}
                       itemStyle={{ color: '#fff' }}
+                      labelFormatter={(label) => `Date: ${label}`}
                     />
                     <Line
                       type="monotone"
                       dataKey="price"
                       stroke={selectedStock.isPositive ? "#10b981" : "#ef4444"}
-                      strokeWidth={3}
-                      dot={{ r: 4, fill: '#1e293b', strokeWidth: 2 }}
-                      activeDot={{ r: 8 }}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -85,7 +133,7 @@ const Stocks = () => {
           </div>
 
           {/* RIGHT COLUMN: Stock List Selector */}
-          <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-xl overflow-hidden flex flex-col h-fit">
+          <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-xl overflow-hidden flex flex-col h-[500px]">
             <div className="p-4 border-b border-slate-800 bg-slate-800/50">
               <h3 className="font-bold text-slate-200 flex items-center">
                 <Layers size={18} className="mr-2 text-blue-500"/>
@@ -93,13 +141,13 @@ const Stocks = () => {
               </h3>
             </div>
 
-            <div className="divide-y divide-slate-800">
-              {mockStockData.map((stock) => (
+            <div className="divide-y divide-slate-800 overflow-y-auto custom-scrollbar">
+              {stocks.map((stock) => (
                 <button
-                  key={stock.symbol}
+                  key={stock.id}
                   onClick={() => setSelectedStock(stock)}
                   className={`w-full p-4 flex justify-between items-center hover:bg-slate-800 transition text-left group ${
-                    selectedStock.symbol === stock.symbol ? 'bg-slate-800 border-l-4 border-blue-500' : 'border-l-4 border-transparent'
+                    selectedStock.id === stock.id ? 'bg-slate-800 border-l-4 border-blue-500' : 'border-l-4 border-transparent'
                   }`}
                 >
                   <div>
@@ -116,7 +164,7 @@ const Stocks = () => {
               ))}
             </div>
 
-            <div className="p-4 bg-slate-800/30 text-center">
+            <div className="p-4 bg-slate-800/30 text-center border-t border-slate-800 mt-auto">
               <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
                 + Add New Stock
               </button>
