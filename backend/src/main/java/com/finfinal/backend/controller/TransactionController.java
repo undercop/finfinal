@@ -1,5 +1,6 @@
 package com.finfinal.backend.controller;
 
+import com.finfinal.backend.DTO.TransactionDto;
 import com.finfinal.backend.model.Transaction;
 import com.finfinal.backend.service.TransactionService;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,9 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
-    // Create a new Transaction
+    // Create a new Transaction (BUY / SELL)
     @PostMapping
-    public Transaction create(@RequestBody Transaction transaction) {
-        return transactionService.save(transaction);
+    public Transaction create(@RequestBody TransactionDto dto) {
+        return transactionService.create(dto);
     }
 }

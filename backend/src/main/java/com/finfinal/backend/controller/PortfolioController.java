@@ -1,10 +1,13 @@
 package com.finfinal.backend.controller;
 
+import com.finfinal.backend.DTO.PortfolioDiversificationDto;
 import com.finfinal.backend.DTO.PortfolioProjectionDto;
 import com.finfinal.backend.DTO.PortfolioSummaryDto;
 import com.finfinal.backend.service.PortfolioService;
 import com.finfinal.backend.service.ProjectionService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/portfolio")
@@ -34,5 +37,11 @@ public class PortfolioController {
     public PortfolioProjectionDto projection5Y() {
         return projectionService.project(5);
     }
+
+    @GetMapping("/diversification")
+    public List<PortfolioDiversificationDto> diversification() {
+        return portfolioService.getDiversification();
+    }
+
 
 }
