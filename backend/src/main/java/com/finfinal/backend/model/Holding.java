@@ -1,4 +1,5 @@
 package com.finfinal.backend.model;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -14,6 +15,9 @@ public class Holding {
 
     private int quantity;
 
+    @Column(nullable = false)
+    private double avgBuyPrice;
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -23,4 +27,7 @@ public class Holding {
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public double getAvgBuyPrice() { return avgBuyPrice; }
+    public void setAvgBuyPrice(double avgBuyPrice) { this.avgBuyPrice = avgBuyPrice; }
 }
