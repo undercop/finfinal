@@ -14,9 +14,8 @@ public class PortfolioController {
         this.portfolioService = portfolioService;
     }
 
-    // Get portfolio summary
     @GetMapping("/summary")
-    public PortfolioSummaryDto getPortfolioSummary() {
-        return portfolioService.getPortfolioSummary();
+    public PortfolioSummaryDto getSummary() {
+        return portfolioService.getSummary();
     }
 }
