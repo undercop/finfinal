@@ -1,0 +1,20 @@
+market:
+  assets:
+    - id: 1
+      category: STOCK
+      basePrice: 1200
+    - id: 2
+      category: MF_LARGE
+      basePrice: 200
+    - id: 3
+      category: MF_MID
+      basePrice: 150
+    - id: 4
+      category: MF_SMALL
+      basePrice: 110
+    - id: 5
+      category: GOLD_ETF
+      basePrice: 5200
+    - id: 6
+      category: SILVER_ETF
+      basePrice: 7200
