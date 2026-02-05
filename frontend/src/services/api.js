@@ -94,8 +94,8 @@ export const getTransactions = async () => {
          type: tx.type,
          asset: assetName, // Direct access
          amount: `${tx.quantity} Shares`,
-         price: `$${tx.price}`,
-         total: `$${totalValue.toLocaleString()}`,
+         price: `₹${tx.price}`,
+         total: `₹${totalValue.toLocaleString()}`,
          date: tx.date || "Recent", // Fallback if date is missing
          status: "Completed"
        };

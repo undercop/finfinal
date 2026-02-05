@@ -3,8 +3,9 @@ package com.finfinal.backend.service;
 import com.finfinal.backend.DTO.PortfolioSummaryDto;
 import com.finfinal.backend.DTO.PortfolioDiversificationDto;
 import com.finfinal.backend.model.Asset;
+import com.finfinal.backend.model.Holding;
 import com.finfinal.backend.model.PriceHistory;
-import com.finfinal.backend.repository.AssetRepository;
+import com.finfinal.backend.repository.HoldingRepository; // <--- 1. Import This
 import com.finfinal.backend.repository.PriceHistoryRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,31 +16,39 @@ import java.util.Map;
 @Service
 public class PortfolioService {
 
-    private final AssetRepository assetRepository;
+    // Removed AssetRepository, added HoldingRepository
+    private final HoldingRepository holdingRepository;
     private final PriceHistoryRepository priceHistoryRepository;
 
-    public PortfolioService(AssetRepository assetRepository,
+    public PortfolioService(HoldingRepository holdingRepository,
                             PriceHistoryRepository priceHistoryRepository) {
-        this.assetRepository = assetRepository;
+        this.holdingRepository = holdingRepository;
         this.priceHistoryRepository = priceHistoryRepository;
     }
 
     /* =========================================================
-       PORTFOLIO SUMMARY
+       PORTFOLIO SUMMARY (Corrected to use Holdings)
        ========================================================= */
 
     public PortfolioSummaryDto getSummary() {
 
-        List<Asset> assets = assetRepository.findAll();
+        // 1. Fetch what the user ACTUALLY owns
+        List<Holding> holdings = holdingRepository.findAll();
 
         double totalPortfolioValue = 0.0;
         double oneDayReturnValue = 0.0;
         double projectedValue = 0.0;
 
-        for (Asset asset : assets) {
+        for (Holding holding : holdings) {
 
+            // Skip empty holdings to avoid unnecessary processing
+            if (holding.getQuantity() <= 0) continue;
+
+            Asset asset = holding.getAsset(); // Get the linked Asset details
+
+            // 2. Calculate value using HOLDING quantity * ASSET price
             double assetCurrentValue =
-                    asset.getCurrentPrice() * asset.getQuantity();
+                    asset.getCurrentPrice() * holding.getQuantity();
 
             totalPortfolioValue += assetCurrentValue;
 
@@ -53,8 +62,9 @@ public class PortfolioService {
                 double todayPrice = last2.get(0).getPrice();
                 double yesterdayPrice = last2.get(1).getPrice();
 
+                // Logic: (Price Change) * (User's Quantity)
                 oneDayReturnValue +=
-                        (todayPrice - yesterdayPrice) * asset.getQuantity();
+                        (todayPrice - yesterdayPrice) * holding.getQuantity();
             }
 
             /* ---------- PROJECTION (NEXT 30 DAYS) ---------- */
@@ -64,24 +74,24 @@ public class PortfolioService {
                             .findTop30ByAssetIdOrderByDateDesc(asset.getId());
 
             if (last30.size() >= 2) {
-
                 double cumulativeDailyReturn = 0.0;
 
                 for (int i = 0; i < last30.size() - 1; i++) {
                     double today = last30.get(i).getPrice();
                     double prev = last30.get(i + 1).getPrice();
-
                     cumulativeDailyReturn += (today - prev) / prev;
                 }
 
                 double avgDailyReturn =
                         cumulativeDailyReturn / (last30.size() - 1);
 
+                // Project the value of THIS holding
                 double projectedAssetValue =
                         assetCurrentValue * (1 + avgDailyReturn * 30);
 
                 projectedValue += projectedAssetValue;
             } else {
+                // If not enough history, assume flat growth
                 projectedValue += assetCurrentValue;
             }
         }
@@ -103,18 +113,23 @@ public class PortfolioService {
     }
 
     /* =========================================================
-       PORTFOLIO DIVERSIFICATION
+       PORTFOLIO DIVERSIFICATION (Corrected to use Holdings)
        ========================================================= */
 
     public List<PortfolioDiversificationDto> getDiversification() {
 
-        List<Asset> assets = assetRepository.findAll();
+        // 1. Fetch holdings
+        List<Holding> holdings = holdingRepository.findAll();
         Map<String, Double> categoryMap = new HashMap<>();
 
-        for (Asset asset : assets) {
+        for (Holding holding : holdings) {
 
-            double value =
-                    asset.getCurrentPrice() * asset.getQuantity();
+            if (holding.getQuantity() <= 0) continue;
+
+            Asset asset = holding.getAsset();
+
+            // 2. Calculate true value: Holding Qty * Market Price
+            double value = asset.getCurrentPrice() * holding.getQuantity();
 
             String category = asset.getCategory().name();
 

@@ -5,7 +5,7 @@ import { Briefcase, TrendingUp, TrendingDown, RefreshCw, Zap } from 'lucide-reac
 const Holdings = () => {
   // Data State
   const [holdings, setHoldings] = useState([]);
-  const [availableStocks, setAvailableStocks] = useState([]); // For the dropdown
+  const [availableStocks, setAvailableStocks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Terminal State
@@ -43,10 +43,15 @@ const Holdings = () => {
   const currentValue = holdings.reduce((acc, curr) => acc + (curr.currentPrice * curr.quantity), 0);
   const totalPL = currentValue - totalInvestment;
 
-  // 2. Terminal Logic (Get selected stock details)
+  // 2. Terminal Logic
+  // Get selected stock market details
   const selectedStock = availableStocks.find(s => String(s.id) === String(selectedAssetId)) || {};
   const estimatedPrice = selectedStock.price || 0;
   const estimatedTotal = estimatedPrice * quantity;
+
+  // CORRECT LOGIC: Get owned quantity from HOLDINGS table, not Assets table
+  const currentHolding = holdings.find(h => String(h.id) === String(selectedAssetId));
+  const ownedQuantity = currentHolding ? currentHolding.quantity : 0;
 
   // --- Handlers ---
   const handleTrade = async () => {
@@ -62,7 +67,7 @@ const Holdings = () => {
       });
 
       alert(`${tradeType} order successfully placed!`);
-      loadData(); // Refresh table to show new quantity
+      loadData(); // Refresh table
     } catch (error) {
       alert("Trade failed. Please check backend connection.");
     } finally {
@@ -76,27 +81,27 @@ const Holdings = () => {
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* 1. TOP SUMMARY CARDS */}
+        {/* 1. TOP SUMMARY CARDS (Rupee Updated) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
               <p className="text-slate-400 text-sm font-medium">Total Investment</p>
-              <h3 className="text-2xl font-bold text-white mt-1">${totalInvestment.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
+              <h3 className="text-2xl font-bold text-white mt-1">₹{totalInvestment.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
            </div>
            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
               <p className="text-slate-400 text-sm font-medium">Current Value</p>
-              <h3 className="text-2xl font-bold text-blue-400 mt-1">${currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
+              <h3 className="text-2xl font-bold text-blue-400 mt-1">₹{currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
            </div>
            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
               <p className="text-slate-400 text-sm font-medium">Total Profit/Loss</p>
               <h3 className={`text-2xl font-bold mt-1 ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {totalPL >= 0 ? '+' : ''}${totalPL.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {totalPL >= 0 ? '+' : ''}₹{totalPL.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </h3>
            </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* 2. HOLDINGS TABLE (Left Side - 2 Cols) */}
+          {/* 2. HOLDINGS TABLE (Left Side) */}
           <div className="lg:col-span-2 bg-slate-900 rounded-xl border border-slate-800 shadow-lg overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
               <h3 className="font-bold text-white flex items-center gap-2">
@@ -125,16 +130,16 @@ const Holdings = () => {
                     return (
                       <tr key={item.id || item.symbol} className="hover:bg-slate-800/50 transition duration-150">
                         <td className="p-4 font-bold text-white">
-                          {item.symbol}
-                          <span className="block text-xs font-normal text-slate-500">{item.name}</span>
+                          {item.name}
+                          <span className="block text-xs font-normal text-slate-500">{item.symbol}</span>
                         </td>
                         <td className="p-4 text-center text-slate-300">{item.quantity}</td>
-                        <td className="p-4 text-right text-slate-400">${item.avgPrice.toFixed(2)}</td>
-                        <td className="p-4 text-right text-blue-400 font-medium">${item.currentPrice.toFixed(2)}</td>
+                        <td className="p-4 text-right text-slate-400">₹{item.avgPrice.toFixed(2)}</td>
+                        <td className="p-4 text-right text-blue-400 font-medium">₹{item.currentPrice.toFixed(2)}</td>
                         <td className={`p-4 text-right font-bold ${isProfit ? 'text-green-400' : 'text-red-400'}`}>
                           <div className="flex items-center justify-end gap-1">
                             {isProfit ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
-                            ${Math.abs(pl).toFixed(2)}
+                            ₹{Math.abs(pl).toFixed(2)}
                           </div>
                         </td>
                       </tr>
@@ -148,7 +153,7 @@ const Holdings = () => {
             </div>
           </div>
 
-          {/* 3. EXECUTION TERMINAL (Right Side - 1 Col) */}
+          {/* 3. EXECUTION TERMINAL (Right Side) */}
           <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 h-fit sticky top-24 shadow-lg ring-1 ring-white/5">
             <h3 className="font-bold text-white mb-6 flex items-center gap-2 text-lg">
               <Zap className="text-yellow-500" fill="currentColor" size={20}/>
@@ -163,9 +168,10 @@ const Holdings = () => {
                 onChange={(e) => setSelectedAssetId(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               >
+                {/* Updated to show Full Name */}
                 {availableStocks.map(stock => (
                   <option key={stock.id} value={stock.id}>
-                    {stock.symbol} — ${stock.price}
+                    {stock.name} — ₹{stock.price}
                   </option>
                 ))}
               </select>
@@ -173,7 +179,11 @@ const Holdings = () => {
 
             {/* Quantity Input */}
             <div className="mb-6">
-              <label className="text-xs text-slate-400 font-bold mb-2 block uppercase tracking-wider">Quantity</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Quantity</label>
+                {/* Shows Owned Quantity from Holdings Table */}
+                <span className="text-xs text-blue-400">You Own: {ownedQuantity}</span>
+              </div>
               <input
                 type="number"
                 min="1"
@@ -187,12 +197,12 @@ const Holdings = () => {
             <div className="space-y-3 mb-8 text-sm bg-slate-950/50 p-4 rounded-lg border border-slate-800/50">
               <div className="flex justify-between text-slate-400">
                 <span>Market Price:</span>
-                <span className="text-white font-medium">${estimatedPrice.toFixed(2)}</span>
+                <span className="text-white font-medium">₹{estimatedPrice.toFixed(2)}</span>
               </div>
               <div className="flex justify-between border-t border-slate-800 pt-2 mt-2">
                 <span className="text-slate-400">Est. Total:</span>
                 <span className={`font-bold text-lg ${tradeType === 'BUY' ? 'text-green-400' : 'text-red-400'}`}>
-                   ${estimatedTotal.toLocaleString()}
+                   ₹{estimatedTotal.toLocaleString()}
                 </span>
               </div>
             </div>
