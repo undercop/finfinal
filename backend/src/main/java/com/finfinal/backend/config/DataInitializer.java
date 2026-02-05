@@ -22,7 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        // Prevent duplicate inserts
+        // Hardik: To Prevent duplicate inserts
         if (assetRepository.count() > 0) return;
 
         assetRepository.saveAll(List.of(
@@ -50,10 +50,10 @@ public class DataInitializer implements CommandLineRunner {
                 new Asset(null, "Axis Small Cap Fund", MF_SMALL, 164.20, 161.80, 25),
 
                 // GOLD ETF
-                new Asset(null, "SBI Gold ETF", GOLD_ETF, 6125.00, 6070.00, 8),
+                new Asset(null, "SBI Gold ETF", GOLD_ETF, 349.00, 335.00, 8),
 
                 // SILVER ETF
-                new Asset(null, "ICICI Silver ETF", SILVER_ETF, 72450.00, 71890.00, 1)
+                new Asset(null, "ICICI Silver ETF", SILVER_ETF, 515.00, 490.00, 1)
         ));
     }
 }
