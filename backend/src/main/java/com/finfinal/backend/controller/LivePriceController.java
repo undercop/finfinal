@@ -26,7 +26,7 @@ public class LivePriceController {
         return ResponseEntity.ok(service.getAllLivePrices());
     }
 
-    /**
+    /**git
      * Fetch live price for a single asset (optional but useful)
      */
     @GetMapping("/{assetId}")
