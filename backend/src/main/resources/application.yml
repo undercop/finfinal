@@ -1,0 +1,6 @@
+ai:
+  enabled: true
+
+gemini:
+  api-key: AIzaSyCzr5jOqmT9jiZzr2EMIHOcy5d9YhzkZfE
+
