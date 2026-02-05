@@ -27,7 +27,6 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-    // ... your existing POST create method ...
     @PostMapping
     public Transaction create(@RequestBody TransactionDto dto) {
         return transactionService.create(dto);
