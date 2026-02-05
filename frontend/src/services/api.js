@@ -211,38 +211,35 @@ export const getBatchLivePrices = async (assetIds) => {
   // Filter out any failed requests (nulls)
   return results.filter(item => item !== null);
 };
+// 6. INTRADAY PRICES (For Live Graph)
 export const getIntradayPrices = async (assetId) => {
   try {
     const res = await api.get(`/intraday-prices/${assetId}`);
 
-    // Debug: Check what the backend actually sends
-    console.log(`Raw Intraday Data for ${assetId}:`, res.data);
-
-    // Safety check: Ensure we actually have an array
-    if (!Array.isArray(res.data)) {
-      console.warn("Intraday endpoint did not return an array:", res.data);
-      return [];
-    }
+    if (!Array.isArray(res.data)) return [];
 
     return res.data.map(point => {
-      // 1. Safe Date Parsing
-      let timeLabel = "00:00:00";
-      if (point.updatedAt) {
-        // Create date object
-        const dateObj = new Date(point.updatedAt);
-        // Format to "10:30:15" format
-        timeLabel = dateObj.toLocaleTimeString('en-US', { hour12: false });
-      }
+      let timeLabel = "00:00:00"; // Default fallback
 
-      // 2. Force Price to Number
-      const numPrice = parseFloat(point.price);
+      // SCENARIO 1: "updatedAt": "2026-02-05T09:08:53.088" (Standard ISO)
+      if (point.updatedAt && point.updatedAt.includes('T')) {
+        const afterT = point.updatedAt.split('T')[1];
+        timeLabel = afterT.split('.')[0]; // Result: "09:08:53"
+      }
+      // SCENARIO 2: "time": "09:08:53" (Direct Time String)
+      else if (point.time) {
+        timeLabel = point.time;
+      }
+      // SCENARIO 3: "updatedAt": "09:08:53" (Sometimes backend sends time in updatedAt field)
+      else if (point.updatedAt) {
+        timeLabel = point.updatedAt;
+      }
 
       return {
         day: timeLabel,
-        price: numPrice // <--- Crucial: Must be a number (blue/green text in console)
+        price: parseFloat(point.price) || 0
       };
     });
-
   } catch (error) {
     console.error(`Failed to load intraday for ${assetId}`, error);
     return [];
@@ -329,5 +326,20 @@ export const getCriticalAlerts = async () => {
     } catch (error) {
       console.error("Failed to fetch rebalance suggestions:", error);
       return "";
+    }
+  };
+  // 11. ASSET SIGNAL (Individual Stock Insight)
+  export const getAssetSignal = async (assetId) => {
+    if (!USE_REAL_API) {
+      return "Mock Insight: This stock has shown strong resilience at the ₹150 support level. Momentum indicators suggest a potential breakout if volume increases.";
+    }
+
+    try {
+      const response = await api.get(`/ai/asset-signal/${assetId}`);
+      // Assuming backend returns a raw string or an object with a 'message' field
+      return typeof response.data === 'string' ? response.data : response.data.message || JSON.stringify(response.data);
+    } catch (error) {
+      console.error(`Failed to fetch signal for asset ${assetId}`, error);
+      return "Unable to generate AI signal at this time.";
     }
   };

@@ -2,5 +2,5 @@ ai:
   enabled: true
 
 gemini:
-  api-key: AIzaSyBM0Cvvs4P7BdP98SMma_XFrcxdQfpu-PY
+  api-key:
 
