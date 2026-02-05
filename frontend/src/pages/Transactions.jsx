@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { getTransactions } from '../services/api'; // <--- 1. Import the service
+import { getTransactions } from '../services/api';
 import { ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2 } from 'lucide-react';
 
 const Transactions = () => {
