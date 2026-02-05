@@ -271,3 +271,63 @@ export const placeTrade = async (tradeDetails) => {
     throw error;
   }
 };
+// 8. RISK ANALYSIS (New Performance Page)
+export const getRiskAnalysis = async () => {
+  if (!USE_REAL_API) {
+    // Return mock data if API is off
+    return {
+      categoryExposure: { "STOCK": 44, "MF_LARGE": 23, "MF_SMALL": 12, "GOLD": 10, "Other": 11 },
+      dimensionScores: { "concentrationRisk": 0.3, "growthBiasRisk": 0.4, "allocationRisk": 3.2 },
+      insights: ["Mock insight: High stock concentration.", "Mock insight: Growth bias detected."],
+      riskLabel: "Aggressive",
+      riskScore: 3.89,
+      summary: "Aggressive portfolio with high growth orientation."
+    };
+  }
+
+  try {
+    const response = await api.get('/ai/risk');
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch risk analysis:", error);
+    return null;
+  }
+};
+// 9. CRITICAL ALERTS (For Performance Page)
+export const getCriticalAlerts = async () => {
+  if (!USE_REAL_API) {
+    // Return empty array or mock data for testing
+    // return [];
+    return [
+       { assetId: 1, assetName: "Adani Ent", category: "STOCK", message: "Sharp decline detected.", changePercent: -12.4, type: "WARNING" },
+       { assetId: 2, assetName: "Nifty Bees", category: "ETF", message: "Strong rally observed.", changePercent: 5.8, type: "OPPORTUNITY" }
+    ];
+  }
+
+  try {
+    const response = await api.get('/alerts/critical');
+    // Ensure we always return an array
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error("Failed to fetch critical alerts:", error);
+    return [];
+  }
+};// 10. REBALANCE SUGGESTIONS (New)
+  export const getRebalanceSuggestions = async () => {
+    if (!USE_REAL_API) {
+      return `* **Increase MF_SMALL:** Elevating small-cap fund allocation introduces higher growth potential.
+  * **Increase MF_MID:** Boosting mid-cap fund exposure taps into companies with strong growth trajectories.
+  * **Decrease MF_LARGE:** Reducing large-cap fund weight prevents overconcentration.
+  * **Decrease STOCK:** Trimming individual stock holdings mitigates specific company risk.
+  * **Increase GOLD_ETF (gradually):** Incrementally building gold ETF exposure enhances portfolio resilience.`;
+    }
+
+    try {
+      const response = await api.get('/ai/rebalance');
+      // The backend returns a raw String, so we just return it directly
+      return response.data || "";
+    } catch (error) {
+      console.error("Failed to fetch rebalance suggestions:", error);
+      return "";
+    }
+  };

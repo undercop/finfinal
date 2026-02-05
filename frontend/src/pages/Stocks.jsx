@@ -183,7 +183,7 @@ const Stocks = () => {
             <div className="p-4 border-b border-slate-800 bg-slate-800/50">
               <h3 className="font-bold text-slate-200 flex items-center">
                 <Layers size={18} className="mr-2 text-blue-500"/>
-                Your Portfolio
+                Available stocks
               </h3>
             </div>
 
@@ -205,7 +205,7 @@ const Stocks = () => {
                     <p className="font-bold text-white group-hover:text-blue-400 transition truncate">
                         {stock.name}
                     </p>
-                    <p className="text-xs text-slate-500">{stock.shares} Quantity</p>
+{/*                     <p className="text-xs text-slate-500">{stock.shares} Quantity</p> */}
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-slate-200">₹{stock.price}</p>

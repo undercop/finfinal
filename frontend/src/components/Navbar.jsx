@@ -36,6 +36,7 @@ const Navbar = ({ currentPage, onNavigate }) => {
             Dashboard
           </button>
 
+
           <button
             onClick={() => onNavigate('transactions')}
             className={navButtonClass('transactions')}
@@ -56,6 +57,14 @@ const Navbar = ({ currentPage, onNavigate }) => {
           >
             Holdings
           </button>
+          <button
+            onClick={() => onNavigate('performance')}
+            className={navButtonClass('performance')}
+          >
+            Performance
+          </button>
+
+
         </div>
 
         {/* Right Side */}
