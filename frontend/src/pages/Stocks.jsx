@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { getStocks } from '../services/api'; // Ensure your API service is updated to fetch from holdings
+import React, { useState, useEffect, useRef } from 'react';
+import { getStocks, getIntradayPrices } from '../services/api'; // Import new function
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, Layers } from 'lucide-react';
+import { TrendingUp, TrendingDown, Layers, Activity, Clock } from 'lucide-react';
 
 const Stocks = () => {
+  // Main Data
   const [stocks, setStocks] = useState([]);
   const [selectedStock, setSelectedStock] = useState(null);
+
+  // Graph State
+  const [viewMode, setViewMode] = useState('HISTORY'); // Options: 'HISTORY' | 'LIVE'
+  const [liveData, setLiveData] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
+  // 1. Load Initial Stock List
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -24,6 +31,34 @@ const Stocks = () => {
     };
     loadData();
   }, []);
+
+  // 2. Handle Graph Data Switching & Polling
+  useEffect(() => {
+    if (!selectedStock) return;
+
+    // A. If History Mode: Do nothing (data is already in selectedStock.history)
+    if (viewMode === 'HISTORY') {
+      return;
+    }
+
+    // B. If Live Mode: Fetch immediately + Set Interval
+    const fetchLive = async () => {
+      const data = await getIntradayPrices(selectedStock.id);
+      setLiveData(data);
+    };
+
+    fetchLive(); // Fetch once immediately
+    const interval = setInterval(fetchLive, 5000); // Fetch every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup on switch/unmount
+
+  }, [viewMode, selectedStock]); // Re-run if stock or mode changes
+
+
+  // Helper: Decide which data to show
+  const currentChartData = viewMode === 'HISTORY'
+    ? (selectedStock?.history || [])
+    : liveData;
 
   if (loading) {
     return (
@@ -64,12 +99,32 @@ const Stocks = () => {
                       {selectedStock.symbol}
                     </span>
                   </h2>
-                  <p className="text-slate-400 text-sm">
-                    Performance ({selectedStock.history?.length || 0} Days)
-                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    {/* TOGGLE BUTTONS */}
+                    <button
+                      onClick={() => setViewMode('HISTORY')}
+                      className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all ${
+                        viewMode === 'HISTORY'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      }`}
+                    >
+                      <Clock size={12} /> 1 Year History
+                    </button>
+                    <button
+                      onClick={() => setViewMode('LIVE')}
+                      className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all ${
+                        viewMode === 'LIVE'
+                        ? 'bg-red-600 text-white animate-pulse-slow'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      }`}
+                    >
+                      <Activity size={12} /> Live Intraday
+                    </button>
+                  </div>
                 </div>
+
                 <div className="text-right">
-                  {/* RUPEE SIGN FIXED */}
                   <p className="text-3xl font-bold text-white">₹{selectedStock.price}</p>
                   <p className={`text-sm font-medium flex items-center justify-end ${selectedStock.isPositive ? 'text-green-400' : 'text-red-400'}`}>
                     {selectedStock.isPositive ? <TrendingUp size={16} className="mr-1"/> : <TrendingDown size={16} className="mr-1"/>}
@@ -80,32 +135,42 @@ const Stocks = () => {
 
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={selectedStock.history || []}>
+                  <LineChart data={currentChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+
                     <XAxis
                       dataKey="day"
                       stroke="#64748b"
-                      tick={{fill: '#64748b'}}
+                      tick={{fill: '#64748b', fontSize: 11}} // Smaller font for time
                       axisLine={false}
+                      minTickGap={30} // Prevents time labels from overlapping
                     />
+
                     <YAxis
                       stroke="#64748b"
-                      tick={{fill: '#64748b'}}
+                      tick={{fill: '#64748b', fontSize: 12}}
                       axisLine={false}
-                      domain={['auto', 'auto']}
-                      tickFormatter={(value) => `₹${value}`} // RUPEE SIGN FIXED
+                      domain={['auto', 'auto']} // Keeps the line centered
+                      tickFormatter={(value) => `₹${value}`}
                     />
+
                     <Tooltip
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff' }}
                       itemStyle={{ color: '#fff' }}
-                      formatter={(value) => [`₹${value}`, "Price"]} // RUPEE SIGN FIXED
+                      formatter={(value) => [`₹${Number(value).toFixed(2)}`, "Price"]}
+                      labelFormatter={(label) => `${viewMode === 'LIVE' ? 'Time' : 'Date'}: ${label}`}
                     />
+
                     <Line
-                      type="monotone"
+                      type="monotone" // <--- MAKES THE LINE SMOOTH / CURVED
                       dataKey="price"
-                      stroke={selectedStock.isPositive ? "#10b981" : "#ef4444"}
-                      strokeWidth={2}
-                      dot={false}
+                      // Blue for Live, Green/Red for History
+                      stroke={viewMode === 'LIVE' ? '#3b82f6' : (selectedStock.isPositive ? "#10b981" : "#ef4444")}
+                      strokeWidth={3} // Slightly thicker for better visibility
+                      dot={false}     // <--- REMOVES DOTS for a clean "stream" look
+                      activeDot={{ r: 6, fill: '#fff' }}
+                      isAnimationActive={true} // Keep animation for smooth updates
+                      animationDuration={500}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -113,7 +178,7 @@ const Stocks = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Stock List Selector (UPDATED) */}
+          {/* RIGHT COLUMN: Stock List Selector */}
           <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-xl overflow-hidden flex flex-col h-[600px]">
             <div className="p-4 border-b border-slate-800 bg-slate-800/50">
               <h3 className="font-bold text-slate-200 flex items-center">
@@ -126,21 +191,23 @@ const Stocks = () => {
               {stocks.map((stock) => (
                 <button
                   key={stock.id}
-                  onClick={() => setSelectedStock(stock)}
+                  onClick={() => {
+                    setSelectedStock(stock);
+                    // Optional: Reset to History mode when changing stock?
+                    // Or keep 'LIVE' mode if user prefers it. Currently keeping mode.
+                    setLiveData([]); // Clear old live data
+                  }}
                   className={`w-full p-4 flex justify-between items-center hover:bg-slate-800 transition text-left group ${
                     selectedStock.id === stock.id ? 'bg-slate-800 border-l-4 border-blue-500' : 'border-l-4 border-transparent'
                   }`}
                 >
                   <div className="flex-1 pr-2">
-                    {/* SHOW FULL NAME instead of just symbol */}
                     <p className="font-bold text-white group-hover:text-blue-400 transition truncate">
                         {stock.name}
                     </p>
-                    {/* FETCH FROM HOLDINGS: Using stock.quantity */}
-                    <p className="text-xs text-slate-500">{stock.quantity} Quantity</p>
+                    <p className="text-xs text-slate-500">{stock.shares} Quantity</p>
                   </div>
                   <div className="text-right">
-                    {/* RUPEE SIGN FIXED */}
                     <p className="text-sm font-medium text-slate-200">₹{stock.price}</p>
                     <p className={`text-xs ${stock.isPositive ? 'text-green-400' : 'text-red-400'}`}>
                       {stock.change}
@@ -149,8 +216,6 @@ const Stocks = () => {
                 </button>
               ))}
             </div>
-
-            {/* Note: "Load More" button has been removed as per your request */}
           </div>
 
         </div>

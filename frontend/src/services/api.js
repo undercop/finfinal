@@ -124,17 +124,12 @@ export const getStocks = async () => {
       let isPositive = true;
 
       try {
-        // Fetch 365 days of history for this specific asset
-        // Endpoint: GET /api/price-history/{id}
         const historyRes = await api.get(`/price-history/${asset.id}`);
-
-        // Map backend data (id, date, price, assetId) to Chart data (day, price)
         historyData = historyRes.data.map(h => ({
-           day: h.date, // Assumes date format is "YYYY-MM-DD"
+           day: h.date,
            price: h.price
         }));
 
-        // Calculate Trend based on the last 2 days of history
         if (historyData.length >= 2) {
           const lastPrice = historyData[historyData.length - 1].price;
           const prevPrice = historyData[historyData.length - 2].price;
@@ -145,13 +140,15 @@ export const getStocks = async () => {
         console.warn(`No history found for asset ID ${asset.id}`);
       }
 
+      // FIX: Ensure 2 decimal places here
+      const rawPrice = parseFloat(asset.currentPrice) || 0;
+
       return {
         id: asset.id,
         symbol: asset.name.substring(0, 4).toUpperCase(),
         name: asset.name,
         shares: asset.quantity,
-        price: asset.currentPrice,
-        // If history exists, use calculated change, else 0
+        price: rawPrice.toFixed(2), // <--- Format strictly to 2 decimals
         change: changeVal !== 0 ? changeVal.toFixed(2) : "0.00",
         isPositive: isPositive,
         history: historyData
@@ -213,6 +210,43 @@ export const getBatchLivePrices = async (assetIds) => {
 
   // Filter out any failed requests (nulls)
   return results.filter(item => item !== null);
+};
+export const getIntradayPrices = async (assetId) => {
+  try {
+    const res = await api.get(`/intraday-prices/${assetId}`);
+
+    // Debug: Check what the backend actually sends
+    console.log(`Raw Intraday Data for ${assetId}:`, res.data);
+
+    // Safety check: Ensure we actually have an array
+    if (!Array.isArray(res.data)) {
+      console.warn("Intraday endpoint did not return an array:", res.data);
+      return [];
+    }
+
+    return res.data.map(point => {
+      // 1. Safe Date Parsing
+      let timeLabel = "00:00:00";
+      if (point.updatedAt) {
+        // Create date object
+        const dateObj = new Date(point.updatedAt);
+        // Format to "10:30:15" format
+        timeLabel = dateObj.toLocaleTimeString('en-US', { hour12: false });
+      }
+
+      // 2. Force Price to Number
+      const numPrice = parseFloat(point.price);
+
+      return {
+        day: timeLabel,
+        price: numPrice // <--- Crucial: Must be a number (blue/green text in console)
+      };
+    });
+
+  } catch (error) {
+    console.error(`Failed to load intraday for ${assetId}`, error);
+    return [];
+  }
 };
 
 // 5. PLACE TRADE (Updated for /api/transactions)
