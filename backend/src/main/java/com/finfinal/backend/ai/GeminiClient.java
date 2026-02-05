@@ -17,8 +17,6 @@ public class GeminiClient {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String ask(String prompt) {
-        // 1. Added :generateContent to the URL
-        // 2. Used gemini-1.5-flash (standard stable-ish beta)
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
 
         Map<String, Object> body = Map.of(

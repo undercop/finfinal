@@ -1,5 +1,6 @@
 package com.finfinal.backend.config;
 
+import com.finfinal.backend.DTO.AssetSignal;
 import com.finfinal.backend.DTO.RebalancingSuggestion;
 import com.finfinal.backend.DTO.RiskAssessmentDto;
 import org.springframework.stereotype.Component;
@@ -59,4 +60,29 @@ public class AiPromptBuilder {
 
         return sb.toString();
     }
+
+    public String buildAssetSignalPrompt(AssetSignal signal) {
+
+        return """
+    You are a long-term investment advisor.
+
+    Asset: %s
+    Category: %s
+    Signal: %s
+
+    Reason:
+    %s
+
+    Explain this signal in 3–4 lines.
+    Focus on long-term fundamentals and portfolio balance.
+    Do not predict prices.
+    Do not mention short-term movements.
+    """.formatted(
+                signal.getAssetName(),
+                signal.getCategory(),
+                signal.getSignal(),
+                signal.getRationale()
+        );
+    }
+
 }
