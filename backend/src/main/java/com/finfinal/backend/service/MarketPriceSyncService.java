@@ -3,29 +3,30 @@ package com.finfinal.backend.service;
 
 import com.finfinal.backend.DTO.SimulatedPriceDto;
 import com.finfinal.backend.model.Asset;
-import com.finfinal.backend.model.PriceHistory;
+import com.finfinal.backend.model.LivePrice;
 import com.finfinal.backend.repository.AssetRepository;
+import com.finfinal.backend.repository.LivePriceRepository;
 import com.finfinal.backend.repository.PriceHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class MarketPriceSyncService {
 
     private final AssetRepository assetRepository;
-    private final PriceHistoryRepository priceHistoryRepository;
+    private final LivePriceRepository livePriceRepository;
     private final MarketSimClient marketSimClient;
 
     public MarketPriceSyncService(
             AssetRepository assetRepository,
-            PriceHistoryRepository priceHistoryRepository,
+            LivePriceRepository livePriceRepository,
             MarketSimClient marketSimClient) {
 
         this.assetRepository = assetRepository;
-        this.priceHistoryRepository = priceHistoryRepository;
+        this.livePriceRepository = livePriceRepository;
         this.marketSimClient = marketSimClient;
     }
 
@@ -36,19 +37,21 @@ public class MarketPriceSyncService {
 
         for (SimulatedPriceDto dto : prices) {
 
-            Asset asset = assetRepository.findById(dto.getId()).orElse(null);
-            if (asset == null) continue;
+            Long assetId = dto.getId();
+            if (assetId == null) continue;
 
-            asset.setLastDayPrice(asset.getCurrentPrice());
-            asset.setCurrentPrice(dto.getPrice());
-            assetRepository.save(asset);
+            LivePrice livePrice = livePriceRepository
+                    .findById(assetId)
+                    .orElseGet(() -> {
+                        LivePrice lp = new LivePrice();
+                        lp.setAssetId(assetId);
+                        return lp;
+                    });
 
-            PriceHistory history = new PriceHistory();
-            history.setAsset(asset);
-            history.setPrice(dto.getPrice());
-            history.setDate(LocalDate.now());
+            livePrice.setPrice(dto.getPrice());
+            livePrice.setUpdatedAt(LocalDateTime.now());
 
-            priceHistoryRepository.save(history);
+            livePriceRepository.save(livePrice);
         }
     }
 }

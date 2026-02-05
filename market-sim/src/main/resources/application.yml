@@ -1,20 +1,80 @@
+server:
+  port: 8081
+
 market:
   assets:
+
+    #STOCKS
     - id: 1
       category: STOCK
-      basePrice: 1200
+      basePrice: 2890.50
+
     - id: 2
-      category: MF_LARGE
-      basePrice: 200
+      category: STOCK
+      basePrice: 4120.75
+
     - id: 3
-      category: MF_MID
-      basePrice: 150
+      category: STOCK
+      basePrice: 1645.10
+
     - id: 4
-      category: MF_SMALL
-      basePrice: 110
+      category: STOCK
+      basePrice: 1520.40
+
+
+    #MF LARGE CAP
     - id: 5
-      category: GOLD_ETF
-      basePrice: 5200
+      category: MF_LARGE
+      basePrice: 182.40
+
     - id: 6
+      category: MF_LARGE
+      basePrice: 735.60
+
+    - id: 7
+      category: MF_LARGE
+      basePrice: 812.20
+
+    - id: 8
+      category: MF_LARGE
+      basePrice: 164.80
+
+
+    #MF MID CAP
+    - id: 9
+      category: MF_MID
+      basePrice: 541.80
+
+    - id: 10
+      category: MF_MID
+      basePrice: 612.45
+
+    - id: 11
+      category: MF_MID
+      basePrice: 489.30
+
+
+    #MF SMALL CAP
+    - id: 12
+      category: MF_SMALL
+      basePrice: 186.75
+
+    - id: 13
+      category: MF_SMALL
+      basePrice: 152.60
+
+    - id: 14
+      category: MF_SMALL
+      basePrice: 164.20
+
+
+    # ===== GOLD ETF =====
+    - id: 15
+      category: GOLD_ETF
+      basePrice: 349.00
+
+
+    # ===== SILVER ETF =====
+    - id: 16
       category: SILVER_ETF
-      basePrice: 7200
+      basePrice: 515.00
