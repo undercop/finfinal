@@ -1,8 +1,8 @@
-package com.finfinal.backend.DTO;
+package com.finfinal.backend.service;
 
+import com.finfinal.backend.DTO.RebalancingSuggestion;
+import com.finfinal.backend.DTO.RiskAssessmentDto;
 import com.finfinal.backend.config.AiPromptBuilder;
-import com.finfinal.backend.service.AdvancedRiskAssessmentService;
-import com.finfinal.backend.service.RebalancingEngine;
 import org.springframework.stereotype.Service;
 import  com.finfinal.backend.ai.GeminiClient;
 
