@@ -176,7 +176,7 @@ export const getHoldings = async () => {
     // Map Backend fields -> Frontend UI fields
     return response.data.map(item => ({
       id: item.assetId,
-      symbol: item.assetName.substring(0, 4).toUpperCase(), // Fake symbol logic
+      symbol: item.assetName.substring(0, 4).toUpperCase(),
       name: item.assetName,
       quantity: item.quantity,
       avgPrice: item.avgBuyPrice, // Use the correct field from backend
@@ -188,6 +188,31 @@ export const getHoldings = async () => {
     console.error("Error fetching holdings:", error);
     return mockHoldings;
   }
+};
+
+// Add/Update these functions in your api.js
+
+// 1. Fetch a single price (The endpoint you confirmed)
+export const getLivePriceForAsset = async (assetId) => {
+  try {
+    const response = await api.get(`/live-prices/${assetId}`);
+    return response.data; // Returns { assetId: 1, price: 2900... }
+  } catch (error) {
+    console.error(`Failed to fetch price for asset ${assetId}`, error);
+    return null;
+  }
+};
+
+// 2. Helper to fetch MANY prices in parallel
+export const getBatchLivePrices = async (assetIds) => {
+  // Create an array of promises (one for each ID)
+  const promises = assetIds.map(id => getLivePriceForAsset(id));
+
+  // Wait for all to finish
+  const results = await Promise.all(promises);
+
+  // Filter out any failed requests (nulls)
+  return results.filter(item => item !== null);
 };
 
 // 5. PLACE TRADE (Updated for /api/transactions)
