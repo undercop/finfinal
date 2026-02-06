@@ -226,7 +226,7 @@ const Holdings = () => {
             <div className="space-y-3 mb-8 text-sm bg-slate-950/50 p-4 rounded-lg border border-slate-800/50">
               <div className="flex justify-between text-slate-400">
                 <span>Market Price:</span>
-                <span className="text-white font-medium">₹{currentLivePrice.toFixed(2)}</span>
+                <span className="text-white font-medium">₹{currentLivePrice}</span>
               </div>
               <div className="flex justify-between border-t border-slate-800 pt-2 mt-2">
                 <span className="text-slate-400">Est. Total:</span>

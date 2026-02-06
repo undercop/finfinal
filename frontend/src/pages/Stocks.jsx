@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getStocks, getIntradayPrices } from '../services/api'; // Import new function
+import { getStocks, getIntradayPrices, getAssetSignal } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, Layers, Activity, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Layers, Activity, Clock, Sparkles, Loader2, FileText } from 'lucide-react';
 
 const Stocks = () => {
   // Main Data
@@ -11,6 +11,10 @@ const Stocks = () => {
   // Graph State
   const [viewMode, setViewMode] = useState('HISTORY'); // Options: 'HISTORY' | 'LIVE'
   const [liveData, setLiveData] = useState([]);
+
+  // AI Signal State
+  const [aiSignal, setAiSignal] = useState(null);
+  const [loadingSignal, setLoadingSignal] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +40,9 @@ const Stocks = () => {
   useEffect(() => {
     if (!selectedStock) return;
 
+    // Reset AI Signal when stock changes
+    setAiSignal(null);
+
     // A. If History Mode: Do nothing (data is already in selectedStock.history)
     if (viewMode === 'HISTORY') {
       return;
@@ -52,7 +59,17 @@ const Stocks = () => {
 
     return () => clearInterval(interval); // Cleanup on switch/unmount
 
-  }, [viewMode, selectedStock]); // Re-run if stock or mode changes
+  }, [viewMode, selectedStock]);
+
+  // 3. Handle AI Signal Generation
+  const handleGenerateSignal = async () => {
+    if (!selectedStock) return;
+
+    setLoadingSignal(true);
+    const signal = await getAssetSignal(selectedStock.id);
+    setAiSignal(signal);
+    setLoadingSignal(false);
+  };
 
 
   // Helper: Decide which data to show
@@ -89,6 +106,8 @@ const Stocks = () => {
 
           {/* LEFT COLUMN: Main Chart Section */}
           <div className="lg:col-span-2 space-y-6">
+
+            {/* 1. Chart Container */}
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-xl">
 
               <div className="flex justify-between items-end mb-6">
@@ -125,7 +144,10 @@ const Stocks = () => {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-3xl font-bold text-white">₹{selectedStock.price}</p>
+                  {/* PRICE DISPLAY */}
+                  <p className="text-3xl font-bold text-white">
+                    ₹{Number(selectedStock.price).toFixed(2)}
+                  </p>
                   <p className={`text-sm font-medium flex items-center justify-end ${selectedStock.isPositive ? 'text-green-400' : 'text-red-400'}`}>
                     {selectedStock.isPositive ? <TrendingUp size={16} className="mr-1"/> : <TrendingDown size={16} className="mr-1"/>}
                     {selectedStock.change}
@@ -140,17 +162,18 @@ const Stocks = () => {
 
                     <XAxis
                       dataKey="day"
+                      // Remove hide logic to always show time/date
                       stroke="#64748b"
-                      tick={{fill: '#64748b', fontSize: 11}} // Smaller font for time
+                      tick={{fill: '#64748b', fontSize: 11}}
                       axisLine={false}
-                      minTickGap={30} // Prevents time labels from overlapping
+                      minTickGap={30}
                     />
 
                     <YAxis
                       stroke="#64748b"
                       tick={{fill: '#64748b', fontSize: 12}}
                       axisLine={false}
-                      domain={['auto', 'auto']} // Keeps the line centered
+                      domain={['auto', 'auto']}
                       tickFormatter={(value) => `₹${value}`}
                     />
 
@@ -158,24 +181,73 @@ const Stocks = () => {
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff' }}
                       itemStyle={{ color: '#fff' }}
                       formatter={(value) => [`₹${Number(value).toFixed(2)}`, "Price"]}
-                      labelFormatter={(label) => `${viewMode === 'LIVE' ? 'Time' : 'Date'}: ${label}`}
+                      labelStyle={viewMode === 'LIVE' ? { display: 'none' } : {}}
+                      labelFormatter={(label) => viewMode === 'HISTORY' ? `Date: ${label}` : ''}
                     />
 
                     <Line
-                      type="monotone" // <--- MAKES THE LINE SMOOTH / CURVED
+                      type="monotone"
                       dataKey="price"
-                      // Blue for Live, Green/Red for History
                       stroke={viewMode === 'LIVE' ? '#3b82f6' : (selectedStock.isPositive ? "#10b981" : "#ef4444")}
-                      strokeWidth={3} // Slightly thicker for better visibility
-                      dot={false}     // <--- REMOVES DOTS for a clean "stream" look
+                      strokeWidth={3}
+                      dot={false}
                       activeDot={{ r: 6, fill: '#fff' }}
-                      isAnimationActive={true} // Keep animation for smooth updates
+                      isAnimationActive={true}
                       animationDuration={500}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {/* 2. AI Insight Section */}
+            <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-xl p-6 transition-all">
+              <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Sparkles size={18} className="text-blue-500"/>
+                    AI Asset Insight
+                 </h3>
+                 {!aiSignal && (
+                   <button
+                     onClick={handleGenerateSignal}
+                     disabled={loadingSignal}
+                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+                   >
+                     {loadingSignal ? <Loader2 size={16} className="animate-spin"/> : <Sparkles size={16}/>}
+                     {loadingSignal ? "Analyzing..." : "Generate Insight"}
+                   </button>
+                 )}
+              </div>
+
+              {/* SIGNAL DISPLAY AREA */}
+              {loadingSignal && (
+                <div className="h-24 flex items-center justify-center text-slate-500 animate-pulse text-sm">
+                   Analyzing market trends for {selectedStock.name}...
+                </div>
+              )}
+
+              {aiSignal && !loadingSignal && (
+                <div className="bg-slate-950/50 p-4 rounded-lg border border-slate-800/50 animate-in fade-in slide-in-from-top-2">
+                   <div className="flex gap-3">
+                      <div className="mt-1 min-w-[20px]">
+                        <FileText size={20} className="text-blue-400"/>
+                      </div>
+                      <p className="text-slate-300 text-sm leading-relaxed">
+                        {aiSignal}
+                      </p>
+                   </div>
+                   <div className="mt-3 pt-3 border-t border-slate-800/50 text-right">
+                      <button
+                        onClick={() => setAiSignal(null)}
+                        className="text-xs text-slate-500 hover:text-white transition"
+                      >
+                        Close Insight
+                      </button>
+                   </div>
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* RIGHT COLUMN: Stock List Selector */}
@@ -193,9 +265,7 @@ const Stocks = () => {
                   key={stock.id}
                   onClick={() => {
                     setSelectedStock(stock);
-                    // Optional: Reset to History mode when changing stock?
-                    // Or keep 'LIVE' mode if user prefers it. Currently keeping mode.
-                    setLiveData([]); // Clear old live data
+                    setLiveData([]); // Clear old live data when switching stock
                   }}
                   className={`w-full p-4 flex justify-between items-center hover:bg-slate-800 transition text-left group ${
                     selectedStock.id === stock.id ? 'bg-slate-800 border-l-4 border-blue-500' : 'border-l-4 border-transparent'
@@ -208,7 +278,9 @@ const Stocks = () => {
                     <p className="text-xs text-slate-500">{stock.shares} Quantity</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-slate-200">₹{stock.price}</p>
+                    <p className="text-sm font-medium text-slate-200">
+                      ₹{Number(stock.price).toFixed(2)}
+                    </p>
                     <p className={`text-xs ${stock.isPositive ? 'text-green-400' : 'text-red-400'}`}>
                       {stock.change}
                     </p>
