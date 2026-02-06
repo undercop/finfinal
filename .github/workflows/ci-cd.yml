@@ -18,9 +18,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - run: mvn clean test
+      - run: |
+          cd backend
+          mvn clean test
 
-      - run: mvn clean package -DskipTests
+      - run: |
+          cd backend
+          mvn clean package -DskipTests
 
       - uses: actions/setup-node@v4
         with:
