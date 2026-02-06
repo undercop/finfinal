@@ -26,9 +26,6 @@ public class PortfolioService {
         this.priceHistoryRepository = priceHistoryRepository;
     }
 
-    /* =========================================================
-       PORTFOLIO SUMMARY (Corrected to use Holdings)
-       ========================================================= */
 
     public PortfolioSummaryDto getSummary() {
 
